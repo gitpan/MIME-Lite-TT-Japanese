@@ -4,5 +4,6 @@ WriteMakefile(
     'VERSION_FROM' => 'lib/MIME/Lite/TT/Japanese.pm', # finds $VERSION
     'PREREQ_PM' => {
 	Test::More => 0.32,
+    Jcode => 0,
     },
 );

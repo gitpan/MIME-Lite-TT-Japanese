@@ -2,7 +2,7 @@ package MIME::Lite::TT::Japanese;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.01';
+$VERSION = '0.02';
 
 use base qw(MIME::Lite::TT);
 use Jcode;
