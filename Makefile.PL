@@ -9,7 +9,7 @@ WriteMakefile(
 sub prereq_pm {
 	my %prereq = ('Test::More' => '0.32',
 				  'MIME::Lite::TT' => '0',
+				  'Jcode' => '0',
 				 );
-	$prereq{'Jcode'} = '0' if $] < 5.008;
 	%prereq;
 }

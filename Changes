@@ -1,4 +1,8 @@
 Revision history for Perl extension MIME::Lite::TT::Japanese
+0.04  Wed Sep 08 18:00:07 2004
+	- MIME-Header encoding is now ISO-2022-JP even when over 5.8.0.
+	- Jcode is also required over 5.8.0.
+
 0.03  Sat Jul 31 15:30:49 2004
     - now use Encode when the version of perl is 5.8.0 or more instead of Jcode.
     - add MIME::Lite::TT into PREREQ_PM.

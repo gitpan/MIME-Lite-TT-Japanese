@@ -2,38 +2,45 @@ package MIME::Lite::TT::Japanese;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.03';
+$VERSION = '0.04';
 
 use base qw(MIME::Lite::TT);
+use Jcode;
 
-my ($encode, $mime_encode, $decode, $guess_encoding);
 BEGIN {
 	if ( $] >= 5.008 ) {
 		require Encode;
 		require Encode::Guess;
-		$encode = sub {	Encode::encode("jis", shift) };
-		$mime_encode = sub { Encode::encode("MIME-Header", shift) };
-		$decode = sub {
-			my ($text,$icode) = @_;
-			$icode ||= $guess_encoding->($text);
-			$icode = 'euc-jp' if $icode eq 'euc';
-			return Encode::decode($icode, $text);
-		};
+	}
+}
+
+my ($encode, $guess_encoding);
+BEGIN {
+	if ( $] >= 5.008 ) {
+		no strict 'subs';
+ 		$encode = sub {
+ 			my ($str, $ocode, $icode) = @_;
+ 			$icode ||= $guess_encoding->($str);
+ 			$icode = 'euc-jp' if $icode eq 'euc';
+ 			$ocode = 'euc-jp' if $ocode eq 'euc';
+			Encode::from_to($str, $icode, $ocode ,Encode::FB_QUIET);
+			return $str;
+ 		};
 		$guess_encoding = sub {
 			my $enc = Encode::Guess::guess_encoding(shift, qw/euc-jp shiftjis 7bit-jis/);
 			return ref($enc) ? $enc->name : 'euc-jp';
 		};
  	} else {
-		require Jcode;
-		$encode = sub { Jcode->new(shift, shift)->jis };
-		$mime_encode = sub { Jcode->new(shift, shift)->mime_encode };
-		$decode = sub { $_[0], $_[1] || $guess_encoding->($_[1]) };
+ 		$encode = sub {
+ 			my ($str, $ocode, $icode) = @_;
+ 			return Jcode->new($str, $icode || $guess_encoding->($str) )->$ocode
+ 		};
 		$guess_encoding = sub {
-			my ($text) = @_;
-			my $enc = Jcode::getcode($text) || 'euc';
+			my ($str) = @_;
+			my $enc = Jcode::getcode($str) || 'euc';
 			$enc = 'euc' if $enc eq 'ascii' || $enc eq 'binary';
 			return $enc;
-		}
+		};
 	}
 }
 
@@ -42,10 +49,12 @@ sub _after_process {
 	my %options = (Type => 'text/plain; charset=iso-2022-jp',
 				   Encoding => '7bit',
 				   @_, );
-	$options{Subject} = $mime_encode->( $decode->(@options{qw/Subject Icode/}) );
-	$options{Data} = $encode->( $decode->(@options{qw/Data Icode/}) );
+	$options{Subject} = mime_encode( $encode->($options{Subject}, 'euc', $options{Icode}) );
+	$options{Data} = $encode->( $options{Data}, 'jis', $options{Icode} );
 	return %options;
 }
+
+sub mime_encode { Jcode->new(shift, 'euc')->mime_encode }
 
 1;
 __END__
