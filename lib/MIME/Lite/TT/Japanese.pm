@@ -2,21 +2,48 @@ package MIME::Lite::TT::Japanese;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.02';
+$VERSION = '0.03';
 
 use base qw(MIME::Lite::TT);
-use Jcode;
+
+my ($encode, $mime_encode, $decode, $guess_encoding);
+BEGIN {
+	if ( $] >= 5.008 ) {
+		require Encode;
+		require Encode::Guess;
+		$encode = sub {	Encode::encode("jis", shift) };
+		$mime_encode = sub { Encode::encode("MIME-Header", shift) };
+		$decode = sub {
+			my ($text,$icode) = @_;
+			$icode ||= $guess_encoding->($text);
+			$icode = 'euc-jp' if $icode eq 'euc';
+			return Encode::decode($icode, $text);
+		};
+		$guess_encoding = sub {
+			my $enc = Encode::Guess::guess_encoding(shift, qw/euc-jp shiftjis 7bit-jis/);
+			return ref($enc) ? $enc->name : 'euc-jp';
+		};
+ 	} else {
+		require Jcode;
+		$encode = sub { Jcode->new(shift, shift)->jis };
+		$mime_encode = sub { Jcode->new(shift, shift)->mime_encode };
+		$decode = sub { $_[0], $_[1] || $guess_encoding->($_[1]) };
+		$guess_encoding = sub {
+			my ($text) = @_;
+			my $enc = Jcode::getcode($text) || 'euc';
+			$enc = 'euc' if $enc eq 'ascii' || $enc eq 'binary';
+			return $enc;
+		}
+	}
+}
 
 sub _after_process {
 	my $class = shift;
 	my %options = (Type => 'text/plain; charset=iso-2022-jp',
 				   Encoding => '7bit',
 				   @_, );
-
-	my $icode = delete $options{Icode};
-	$icode ||= 'euc';
-	$options{Subject} = Jcode->new($options{Subject}, $icode)->mime_encode;
-	$options{Data} = Jcode->new($options{Data}, $icode)->jis;
+	$options{Subject} = $mime_encode->( $decode->(@options{qw/Subject Icode/}) );
+	$options{Data} = $encode->( $decode->(@options{qw/Data Icode/}) );
 	return %options;
 }
 
@@ -62,11 +89,11 @@ This module helps creation of Japanese mail.
 
 =item *
 
-MIME encoding of the subject is carried out.
+convert the subject to MIME-Header documented in RFC1522.
 
 =item *
 
-The character code of the mail text is converted to JIS.
+convert the mail text to JIS.
 
 =back
 
@@ -74,9 +101,10 @@ The character code of the mail text is converted to JIS.
 
 =head2 Icode
 
-The character code of the subject of mail and a template is set to this option.
+Set the character code of the subject and the template.
 'euc', 'sjis' or 'utf8' can be set.
-If no values are set, it is assumed that it is 'euc'.
+If no value is set, this module try to guess encoding.
+If it is failed to guess encoding, 'euc' is assumed.
 
 =head1 AUTHOR
 

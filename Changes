@@ -1,6 +1,11 @@
 Revision history for Perl extension MIME::Lite::TT::Japanese
+0.03  Sat Jul 31 15:30:49 2004
+    - now use Encode when the version of perl is 5.8.0 or more instead of Jcode.
+    - add MIME::Lite::TT into PREREQ_PM.
+	- fix document.
+
 0.02  Mon Jul 27 14:57:34 2004
-	- add Jcode to PREREQ_PM in Makefile.PL
+	- add Jcode into PREREQ_PM.
 
 0.01  Sun Jul 25 03:36:36 2004
 	- original version
