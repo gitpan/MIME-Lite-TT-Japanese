@@ -1,11 +1,12 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         MIME-Lite-TT-Japanese
-version:      0.04
+version:      0.05
 version_from: lib/MIME/Lite/TT/Japanese.pm
 installdirs:  site
 requires:
     Jcode:                         0
+    Mail::Date:                    0
     MIME::Lite::TT:                0
     Test::More:                    0.32
 

@@ -1,4 +1,7 @@
 Revision history for Perl extension MIME::Lite::TT::Japanese
+0.05  Wed Dec 15 20:32:24 2004
+    - set Japanese local-time at Date field by default.
+
 0.04  Wed Sep 08 18:00:07 2004
 	- MIME-Header encoding is now ISO-2022-JP even when over 5.8.0.
 	- Jcode is also required over 5.8.0.

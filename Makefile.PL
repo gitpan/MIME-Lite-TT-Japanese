@@ -10,6 +10,7 @@ sub prereq_pm {
 	my %prereq = ('Test::More' => '0.32',
 				  'MIME::Lite::TT' => '0',
 				  'Jcode' => '0',
+                  'Mail::Date' => '0',
 				 );
 	%prereq;
 }

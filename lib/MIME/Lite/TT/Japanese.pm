@@ -2,10 +2,11 @@ package MIME::Lite::TT::Japanese;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.04';
+$VERSION = '0.05';
 
 use base qw(MIME::Lite::TT);
 use Jcode;
+use Mail::Date;
 
 BEGIN {
 	if ( $] >= 5.008 ) {
@@ -48,6 +49,8 @@ sub _after_process {
 	my $class = shift;
 	my %options = (Type => 'text/plain; charset=iso-2022-jp',
 				   Encoding => '7bit',
+                   Datestamp => 0,
+                   Date => datetime_rfc2822(time, '+0900'),
 				   @_, );
 	$options{Subject} = mime_encode( $encode->($options{Subject}, 'euc', $options{Icode}) );
 	$options{Data} = $encode->( $options{Data}, 'jis', $options{Icode} );
@@ -90,11 +93,11 @@ This module helps creation of Japanese mail.
 
 =item *
 
-'text/plain; charset=iso-2022-jp' is set to 'Type' of MIME::Lite option by the default.
+'text/plain; charset=iso-2022-jp' is set to 'Type' of MIME::Lite option by default.
 
 =item *
 
-'7bit' is set to 'Encoding' of MIME::Lite option by the default.
+'7bit' is set to 'Encoding' of MIME::Lite option by default.
 
 =item *
 
@@ -103,6 +106,10 @@ convert the subject to MIME-Header documented in RFC1522.
 =item *
 
 convert the mail text to JIS.
+
+=item *
+
+set Japanese local-time at Date field by default.
 
 =back
 
