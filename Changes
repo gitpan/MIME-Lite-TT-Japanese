@@ -1,4 +1,8 @@
 Revision history for Perl extension MIME::Lite::TT::Japanese
+0.06  Sun Aug 07 23:57:21 2005
+    - implement auto linefeed.
+    - now Jcode is always used. no Encode.
+
 0.05  Wed Dec 15 20:32:24 2004
     - set Japanese local-time at Date field by default.
 

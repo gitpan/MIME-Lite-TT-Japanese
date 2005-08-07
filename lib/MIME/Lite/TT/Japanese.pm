@@ -1,49 +1,11 @@
 package MIME::Lite::TT::Japanese;
-
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.05';
+$VERSION = '0.06';
 
 use base qw(MIME::Lite::TT);
 use Jcode;
 use Mail::Date;
-
-BEGIN {
-	if ( $] >= 5.008 ) {
-		require Encode;
-		require Encode::Guess;
-	}
-}
-
-my ($encode, $guess_encoding);
-BEGIN {
-	if ( $] >= 5.008 ) {
-		no strict 'subs';
- 		$encode = sub {
- 			my ($str, $ocode, $icode) = @_;
- 			$icode ||= $guess_encoding->($str);
- 			$icode = 'euc-jp' if $icode eq 'euc';
- 			$ocode = 'euc-jp' if $ocode eq 'euc';
-			Encode::from_to($str, $icode, $ocode ,Encode::FB_QUIET);
-			return $str;
- 		};
-		$guess_encoding = sub {
-			my $enc = Encode::Guess::guess_encoding(shift, qw/euc-jp shiftjis 7bit-jis/);
-			return ref($enc) ? $enc->name : 'euc-jp';
-		};
- 	} else {
- 		$encode = sub {
- 			my ($str, $ocode, $icode) = @_;
- 			return Jcode->new($str, $icode || $guess_encoding->($str) )->$ocode
- 		};
-		$guess_encoding = sub {
-			my ($str) = @_;
-			my $enc = Jcode::getcode($str) || 'euc';
-			$enc = 'euc' if $enc eq 'ascii' || $enc eq 'binary';
-			return $enc;
-		};
-	}
-}
 
 sub _after_process {
 	my $class = shift;
@@ -52,12 +14,41 @@ sub _after_process {
                    Datestamp => 0,
                    Date => datetime_rfc2822(time, '+0900'),
 				   @_, );
-	$options{Subject} = mime_encode( $encode->($options{Subject}, 'euc', $options{Icode}) );
-	$options{Data} = $encode->( $options{Data}, 'jis', $options{Icode} );
+	$options{Subject} = encode_subject( $options{Subject}, $options{Icode});
+	$options{Data}    = encode_body( $options{Data}, $options{Icode}, $options{LineWidth} );
+    delete $options{LineWidth};
 	return %options;
 }
 
-sub mime_encode { Jcode->new(shift, 'euc')->mime_encode }
+sub encode_subject {
+    my ($str, $icode) = @_;
+    $str = remove_utf8_flag($str);
+    return Jcode->new($str, $icode || guess_encoding($str) )->mime_encode;
+}
+
+sub encode_body {
+    my ($str, $icode, $line_width) = @_;
+    $str = remove_utf8_flag($str);
+    $str =~ s/\x0D\x0A/\n/g;
+    $str =~ tr/\r/\n/;
+    my $encoding = $icode || guess_encoding($str);
+    unless ( $line_width eq '0') {
+        return join "\n", map {
+            Jcode->new($_, $encoding)->jfold($line_width)->jis
+        } split /\n/, $str;
+    } else {
+        return Jcode->new($str, $encoding )->jis;
+    }
+}
+
+sub guess_encoding {
+    my ($str) = @_;
+    my $enc = Jcode::getcode($str) || 'euc';
+    $enc = 'euc' if $enc eq 'ascii' || $enc eq 'binary';
+    return $enc;
+}
+
+sub remove_utf8_flag { pack 'C0A*', $_[0] }
 
 1;
 __END__
@@ -78,6 +69,7 @@ MIME::Lite::TT::Japanese - MIME::Lite::TT with Japanese character code
               TmplParams => \%params, 
               TmplOptions => \%options,
               Icode => 'sjis',
+              LineWidth => 0,
             );
 
   $msg->send();
@@ -111,6 +103,10 @@ convert the mail text to JIS.
 
 set Japanese local-time at Date field by default.
 
+=item *
+
+auto linefeed (by default changes line per 72 bytes)
+
 =back
 
 =head1 ADDITIONAL OPTIONS
@@ -121,6 +117,12 @@ Set the character code of the subject and the template.
 'euc', 'sjis' or 'utf8' can be set.
 If no value is set, this module try to guess encoding.
 If it is failed to guess encoding, 'euc' is assumed.
+
+=head2 LineWidth
+
+number of characters in which it changes line automatically.(the unit is byte. default is 72)
+Set 0 (zero) if you do not want to change line automatically.
+
 
 =head1 AUTHOR
 
