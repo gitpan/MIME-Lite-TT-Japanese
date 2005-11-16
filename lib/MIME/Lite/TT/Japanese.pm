@@ -1,19 +1,21 @@
 package MIME::Lite::TT::Japanese;
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.06';
+$VERSION = '0.07';
 
 use base qw(MIME::Lite::TT);
 use Jcode;
-use Mail::Date;
+use DateTime::Format::Mail;
 
 sub _after_process {
 	my $class = shift;
-	my %options = (Type => 'text/plain; charset=iso-2022-jp',
-				   Encoding => '7bit',
-                   Datestamp => 0,
-                   Date => datetime_rfc2822(time, '+0900'),
-				   @_, );
+	my %options = (
+        Type => 'text/plain; charset=iso-2022-jp',
+        Encoding => '7bit',
+        Datestamp => 0,
+        Date => DateTime::Format::Mail->format_datetime( DateTime->now->set_time_zone('Asia/Tokyo') ),
+        @_,
+    );
 	$options{Subject} = encode_subject( $options{Subject}, $options{Icode});
 	$options{Data}    = encode_body( $options{Data}, $options{Icode}, $options{LineWidth} );
     delete $options{LineWidth};
@@ -69,7 +71,7 @@ MIME::Lite::TT::Japanese - MIME::Lite::TT with Japanese character code
               TmplParams => \%params, 
               TmplOptions => \%options,
               Icode => 'sjis',
-              LineWidth => 0,
+              LineWidth => 72,
             );
 
   $msg->send();
