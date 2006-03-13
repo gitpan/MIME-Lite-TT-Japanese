@@ -1,7 +1,7 @@
 package MIME::Lite::TT::Japanese;
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.07';
+$VERSION = '0.08';
 
 use base qw(MIME::Lite::TT);
 use Jcode;
@@ -16,13 +16,14 @@ sub _after_process {
         Date => DateTime::Format::Mail->format_datetime( DateTime->now->set_time_zone('Asia/Tokyo') ),
         @_,
     );
-	$options{Subject} = encode_subject( $options{Subject}, $options{Icode});
+	$options{Subject} = encode_header( $options{Subject}, $options{Icode});
+    $options{From}    = encode_header( $options{From}, $options{Icode});
 	$options{Data}    = encode_body( $options{Data}, $options{Icode}, $options{LineWidth} );
     delete $options{LineWidth};
 	return %options;
 }
 
-sub encode_subject {
+sub encode_header {
     my ($str, $icode) = @_;
     $str = remove_utf8_flag($str);
     return Jcode->new($str, $icode || guess_encoding($str) )->mime_encode;
@@ -95,10 +96,9 @@ This module helps creation of Japanese mail.
 
 =item *
 
-convert the subject to MIME-Header documented in RFC1522.
+convert the subject and the from to MIME-Header documented in RFC1522.
 
 =item *
-
 convert the mail text to JIS.
 
 =item *
@@ -115,7 +115,7 @@ auto linefeed (by default changes line per 72 bytes)
 
 =head2 Icode
 
-Set the character code of the subject and the template.
+Set the character code of the subject, the from and the template.
 'euc', 'sjis' or 'utf8' can be set.
 If no value is set, this module try to guess encoding.
 If it is failed to guess encoding, 'euc' is assumed.

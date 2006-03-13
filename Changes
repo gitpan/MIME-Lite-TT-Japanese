@@ -1,6 +1,11 @@
 Revision history for Perl extension MIME::Lite::TT::Japanese
+0.08  Mon Mar 13 17:23:00 2006
+    - Mail header 'From' is also converted to MIME-Header.
+      reported and fixed by Tokuhiro Matsuno. Thank you.
+
 0.07  Wed Nov 16 21:56:13 2005
     - now use DateTime::Format::Mail instead of Mail::Date. ( Mail::Date was disappeared from CPAN. )
+      reported and fixed by Daisuke Murase. Thank you.
 
 0.06  Sun Aug 07 23:57:21 2005
     - implement auto linefeed.
